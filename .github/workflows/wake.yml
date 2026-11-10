@@ -38,6 +38,9 @@ jobs:
       - name: Run Predictive Coding
         run: python scripts/train_predictive.py
         
-      # الخطوة الجديدة: ربط الرؤية بالحركة
       - name: Run Multimodal Binding
         run: python scripts/train_multimodal.py
+        
+      # الخطوة النهائية: التكامل الشامل
+      - name: Run Integrated Brain
+        run: python scripts/train_integrated_brain.py
