@@ -2,7 +2,7 @@ name: Sleep Phase - Consolidate & Prevent Forgetting
 
 on:
   schedule:
-    - cron: '0 2 * * *' # كل يوم الساعة 2 صباحًا
+    - cron: '0 2 * * *' # كل يوم الساعة 2 صباحاً
   workflow_dispatch: # السماح بالتشغيل اليدوي
 
 jobs:
@@ -10,25 +10,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
+          
       - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Download Pre-trained Hippocampal Data
-        uses: actions/download-artifact@v4
-        with:
-          name: hippocampal-episodes
-          path: ./data
+        
       - name: Run Sleep Cycle (Replay & Consolidate)
-        run: python scripts/run_sleep_cycle.py --epochs 100
-      - name: Run Forgetting Test (Test on Task A after Task B)
-        run: |
-          echo "Testing retention on Task A..."
-          python scripts/test_forgetting.py --task MNIST-A --threshold 0.5
-      - name: Upload Consolidated Cortex Model
-        uses: actions/upload-artifact@v4
-        with:
-          name: consolidated-cortex-model
-          path: ./models/cortex_final.pkl
+        run: python scripts/run_sleep_cycle.py
+        
+      - name: Run Forgetting Test
+        run: python scripts/test_forgetting.py
