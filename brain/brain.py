@@ -5,14 +5,13 @@ from .plasticity import STDPLearner
 from .novelty import NoveltyDetector
 
 class Brain:
-    def __init__(self, input_dim=5):
+    def __init__(self, input_dim=10): # تم تحديث البعد الافتراضي إلى 10 للبيئة
         self.network = NeuralLayer(input_dim, input_dim)
         self.memory = MemorySystem()
         self.plasticity = STDPLearner()
         self.novelty = NoveltyDetector()
         self.last_prediction = np.zeros(input_dim)
         
-    # أضفنا المتغير label هنا
     def process(self, stimulus, reward=0.0, label=None):
         # 1. الإدراك
         activations = self.network.forward(stimulus)
@@ -39,3 +38,10 @@ class Brain:
             "novelty": is_novel,
             "error": prediction_error
         }
+
+    def act(self, state):
+        """اتخاذ قرار بناءً على الحالة الحالية"""
+        activations = self.network.forward(state)
+        # تحويل نشاط الخلايا إلى حركة (0 إلى 3)
+        action = int(np.argmax(activations)) % 4
+        return action
