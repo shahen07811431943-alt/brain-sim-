@@ -8,14 +8,14 @@ from brain.brain import Brain
 from brain.environment import GridWorld
 from brain.sleep import SleepEngine
 
-print("Starting Interactive Environment Training with OBSTACLES...")
+print("Starting Dynamic Goal Training (Generalization)...")
 
 env = GridWorld(size=5)
 brain = Brain(input_dim=10) 
 sleep_engine = SleepEngine(brain.memory)
 
-episodes = 300 # زيادة الجولات للتعلم وسط العقبات
-max_steps = 100 
+episodes = 1000 # تدريب أطول لبناء خريطة ذهنية
+max_steps = 50 
 
 for ep in range(episodes):
     state = env.reset()
@@ -23,8 +23,8 @@ for ep in range(episodes):
     total_reward = 0
     steps = 0
     
-    # تقليل الاستكشاف ببطء (من 0.9 إلى 0.05)
-    epsilon = max(0.05, 0.9 - (ep / episodes) * 0.85)
+    # تقليل الاستكشاف ببطء شديد
+    epsilon = max(0.05, 1.0 - (ep / episodes) * 0.95)
     
     while not done and steps < max_steps:
         action = brain.act(state, epsilon=epsilon)
@@ -36,13 +36,11 @@ for ep in range(episodes):
         total_reward += reward
         steps += 1
 
-    # طباعة النتيجة كل 30 جولة
-    if ep % 30 == 0:
+    if ep % 100 == 0:
         print(f"Episode {ep}: Total Reward = {total_reward:.2f}, Steps = {steps}, Epsilon = {epsilon:.2f}")
 
-    # النوم كل 50 جولة
-    if ep % 50 == 0 and ep > 0:
-        print("Sleeping to consolidate navigation memories...")
-        sleep_engine.run_sleep_cycle(brain.network, replay_epochs=30)
+    if ep % 200 == 0 and ep > 0:
+        print("Sleeping to consolidate spatial map...")
+        sleep_engine.run_sleep_cycle(brain.network, replay_epochs=50)
 
-print("Training complete. The Brain has mastered the obstacles!")
+print("Training complete. The Brain has built a spatial map!")
