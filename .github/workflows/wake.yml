@@ -32,6 +32,9 @@ jobs:
       - name: Run Interactive Environment
         run: python scripts/train_environment.py
         
-      # الخطوة الجديدة التي أضفناها للرؤية البصرية
       - name: Run Visual Perception
         run: python scripts/train_vision.py
+        
+      # الخطوة الجديدة: الدماغ التنبؤي
+      - name: Run Predictive Coding
+        run: python scripts/train_predictive.py
