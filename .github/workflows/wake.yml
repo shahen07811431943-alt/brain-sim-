@@ -29,6 +29,9 @@ jobs:
       - name: Run Plasticity Tests
         run: pytest tests/test_plasticity.py -v
         
-      # هذا هو السطر الجديد الذي أضفناه لاختبار البيئة التفاعلية
       - name: Run Interactive Environment
         run: python scripts/train_environment.py
+        
+      # الخطوة الجديدة التي أضفناها للرؤية البصرية
+      - name: Run Visual Perception
+        run: python scripts/train_vision.py
