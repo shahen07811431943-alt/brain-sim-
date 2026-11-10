@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        task: [ "MNIST-A", "MNIST-B" ] # محاكاة مهام متسلسلة
+        task: [ "MNIST-A", "MNIST-B" ]
     steps:
       - uses: actions/checkout@v4
       
@@ -35,6 +35,9 @@ jobs:
       - name: Run Visual Perception
         run: python scripts/train_vision.py
         
-      # الخطوة الجديدة: الدماغ التنبؤي
       - name: Run Predictive Coding
         run: python scripts/train_predictive.py
+        
+      # الخطوة الجديدة: ربط الرؤية بالحركة
+      - name: Run Multimodal Binding
+        run: python scripts/train_multimodal.py
