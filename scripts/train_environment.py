@@ -14,7 +14,7 @@ env = GridWorld(size=5)
 brain = Brain(input_dim=10) 
 sleep_engine = SleepEngine(brain.memory)
 
-episodes = 50
+episodes = 100 # زيادة الجولات ليتعلم أكثر
 max_steps = 50 
 
 for ep in range(episodes):
@@ -23,21 +23,26 @@ for ep in range(episodes):
     total_reward = 0
     steps = 0
     
-    # تقليل الاستكشاف مع مرور الوقت (من 0.5 إلى 0.05)
-    epsilon = max(0.05, 0.5 - (ep / episodes) * 0.45)
+    # تقليل الاستكشاف تدريجياً (من 0.8 إلى 0.05)
+    epsilon = max(0.05, 0.8 - (ep / episodes) * 0.75)
     
     while not done and steps < max_steps:
         action = brain.act(state, epsilon=epsilon)
         next_state, reward, done = env.step(action)
-        brain.process(next_state, reward=reward, label=f"ep_{ep}")
+        
+        # الدماغ يتعلم من التجربة (State, Action, Reward, Next State)
+        brain.learn(state, action, reward, next_state)
+        
         state = next_state
         total_reward += reward
         steps += 1
 
+    # طباعة النتيجة كل 10 جولات
     if ep % 10 == 0:
-        print(f"Episode {ep}: Total Reward = {total_reward:.2f}, Steps = {steps}")
+        print(f"Episode {ep}: Total Reward = {total_reward:.2f}, Steps = {steps}, Epsilon = {epsilon:.2f}")
 
-    if ep % 10 == 0 and ep > 0:
+    # النوم كل 20 جولة لتثبيت الذاكرة
+    if ep % 20 == 0 and ep > 0:
         print("Sleeping to consolidate navigation memories...")
         sleep_engine.run_sleep_cycle(brain.network, replay_epochs=20)
 
