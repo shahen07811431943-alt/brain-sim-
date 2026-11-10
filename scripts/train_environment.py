@@ -15,7 +15,7 @@ brain = Brain(input_dim=10)
 sleep_engine = SleepEngine(brain.memory)
 
 episodes = 50
-max_steps = 50 # الحد الأقصى للحركات في الجولة الواحدة لمنع التعليق
+max_steps = 50 
 
 for ep in range(episodes):
     state = env.reset()
@@ -23,18 +23,16 @@ for ep in range(episodes):
     total_reward = 0
     steps = 0
     
-    # أضفنا شرط الخطوات هنا
+    # تقليل الاستكشاف مع مرور الوقت (من 0.5 إلى 0.05)
+    epsilon = max(0.05, 0.5 - (ep / episodes) * 0.45)
+    
     while not done and steps < max_steps:
-        action = brain.act(state)
+        action = brain.act(state, epsilon=epsilon)
         next_state, reward, done = env.step(action)
         brain.process(next_state, reward=reward, label=f"ep_{ep}")
         state = next_state
         total_reward += reward
-        steps += 1 # زيادة عداد الخطوات
-
-    # إذا انتهت الخطوات ولم يصل، نعتبر الجولة منتهية
-    if not done:
-        done = True 
+        steps += 1
 
     if ep % 10 == 0:
         print(f"Episode {ep}: Total Reward = {total_reward:.2f}, Steps = {steps}")
