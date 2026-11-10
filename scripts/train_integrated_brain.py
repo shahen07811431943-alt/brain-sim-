@@ -15,7 +15,7 @@ env = GridWorld(size=5)
 brain = Brain(input_dim=25) 
 sleep_engine = SleepEngine(brain.memory)
 
-# 2. الإشارة البصرية: سهم يشير لليمين (الدماغ يجب أن يتعلم أن هذه الإشارة تعني "تحرك يميناً")
+# 2. الإشارة البصرية: سهم يشير لليمين
 img_right = np.array([0,0,1,0,0, 0,0,1,0,0, 0,1,1,1,1, 0,0,1,0,0, 0,0,1,0,0])
 
 episodes = 100
@@ -34,11 +34,16 @@ for ep in range(episodes):
         # الدماغ ينظر إلى الإشارة البصرية ويقرر الحركة
         action = brain.act(img_right, epsilon=epsilon)
         
-        # البيئة تنفذ الحركة وتعطي النتيجة
-        next_state, reward, done = env.step(action)
+        # البيئة تنفذ الحركة (لمحاكاة التفاعل فقط)
+        next_state, env_reward, done = env.step(action)
         
-        # الدماغ يتعلم من المكافأة (الدوبامين)
-        # تم إصلاح الخطأ هنا: نمرر الصورة نفسها كحالة تالية لأنها الإشارة الثابتة
+        # 🧠 هنا السحر: المكافأة تعتمد على "طاعة السهم البصري" وليس على الوصول للهدف
+        if action == 3:  # 3 تعني RIGHT (يمين)
+            reward = 1.0 # مكافأة دوبامين
+        else:
+            reward = -1.0 # عقاب
+            
+        # الدماغ يتعلم من المكافأة (يربط الصورة بالحركة الصحيحة)
         brain.learn(img_right, action, reward, img_right)
         
         total_reward += reward
