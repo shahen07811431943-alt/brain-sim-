@@ -1,3 +1,9 @@
+import sys
+import os
+
+# إخبار بايثون بالبحث في المجلد الرئيسي
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from brain.plasticity import STDPLearner
 
 def test_stdp_learning():
