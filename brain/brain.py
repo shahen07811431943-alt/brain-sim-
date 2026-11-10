@@ -1,58 +1,50 @@
 import numpy as np
+from .network import NeuralLayer
+from .memory import MemorySystem
+from .plasticity import STDPLearner
+from .novelty import NoveltyDetector
 
-class GridWorld:
-    def __init__(self, size=5):
-        self.size = size
-        self.start_pos = np.array([0, 0])
-        self.goal_pos = np.array([size-1, size-1])
+class Brain:
+    def __init__(self, input_dim=10):
+        self.network = NeuralLayer(input_dim, input_dim)
+        self.memory = MemorySystem()
+        self.plasticity = STDPLearner()
+        self.novelty = NoveltyDetector()
+        self.last_prediction = np.zeros(input_dim)
         
-        # إضافة حوائط في المنتصف (عقبات)
-        self.walls = [
-            np.array([1, 1]), np.array([1, 2]), np.array([1, 3]),
-            np.array([3, 1]), np.array([3, 2]), np.array([3, 3])
-        ]
+        # شبكة Q الجديدة (تحاكي الدوبامين): 4 أفعال × عدد المدخلات
+        self.q_weights = np.random.randn(4, input_dim) * 0.01
         
-        self.agent_pos = self.start_pos.copy()
-        self.last_distance = 0
-
-    def reset(self):
-        self.agent_pos = self.start_pos.copy()
-        self.last_distance = abs(self.agent_pos[0] - self.goal_pos[0]) + abs(self.agent_pos[1] - self.goal_pos[1])
-        return self._get_state()
-
-    def _get_state(self):
-        state = np.zeros(self.size * 2)
-        state[self.agent_pos[0]] = 1.0
-        state[self.size + self.agent_pos[1]] = 1.0
-        return state
-
-    def step(self, action):
-        new_pos = self.agent_pos.copy()
+    def process(self, stimulus, reward=0.0, label=None):
+        activations = self.network.forward(stimulus)
+        prediction_error = np.mean((stimulus - self.last_prediction) ** 2)
+        self.last_prediction = stimulus.copy()
+        is_novel = self.novelty.update_and_detect(activations)
         
-        if action == 0: new_pos[0] = max(0, new_pos[0] - 1)
-        elif action == 1: new_pos[0] = min(self.size - 1, new_pos[0] + 1)
-        elif action == 2: new_pos[1] = max(0, new_pos[1] - 1)
-        elif action == 3: new_pos[1] = min(self.size - 1, new_pos[1] + 1)
-
-        # التحقق من الاصطدام بحائط
-        hit_wall = any(np.array_equal(new_pos, wall) for wall in self.walls)
-        
-        if hit_wall:
-            reward = -1.0 # عقاب قاسٍ على الاصطدام
-            done = False
-            # لا نحدث الموقع (يرتد مكانه)
-        else:
-            self.agent_pos = new_pos
-            done = np.array_equal(self.agent_pos, self.goal_pos)
-            current_distance = abs(self.agent_pos[0] - self.goal_pos[0]) + abs(self.agent_pos[1] - self.goal_pos[1])
+        if is_novel or prediction_error > 0.1 or reward > 0:
+            weight_change = self.plasticity.update(0.0, 1.0, reward)
+            self.network.W += weight_change * np.outer(activations, stimulus) * 0.1
+            if label is None:
+                label = f"ep_{len(self.memory.hippocampus)}"
+            self.memory.encode_episode(stimulus, label=label)
             
-            if done:
-                reward = 10.0
-            elif current_distance < self.last_distance:
-                reward = 0.1
-            else:
-                reward = -0.1
-                
-            self.last_distance = current_distance
+        return {"activations": activations, "novelty": is_novel, "error": prediction_error}
 
-        return self._get_state(), reward, done
+    def act(self, state, epsilon=0.2):
+        if np.random.rand() < epsilon:
+            return np.random.randint(4) # استكشاف
+        
+        # استغلال: نختار الحركة صاحبة أعلى قيمة Q
+        q_values = self.q_weights @ state
+        return int(np.argmax(q_values))
+
+    def learn(self, state, action, reward, next_state, gamma=0.9, alpha=0.1):
+        """تحديث أوزان Q باستخدام فارق التوقع (TD Error) - يحاكي الدوبامين"""
+        q_current = self.q_weights[action] @ state
+        q_next = np.max(self.q_weights @ next_state)
+        
+        # خطأ التوقع (الدوبامين): المكافأة + قيمة المستقبل - قيمة الحاضر
+        td_error = reward + (gamma * q_next) - q_current
+        
+        # تحديث أوزان الفعل بناءً على الخطأ
+        self.q_weights[action] += alpha * td_error * state
