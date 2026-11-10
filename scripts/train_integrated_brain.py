@@ -38,7 +38,8 @@ for ep in range(episodes):
         next_state, reward, done = env.step(action)
         
         # الدماغ يتعلم من المكافأة (الدوبامين)
-        brain.learn(img_right, action, reward, next_state)
+        # تم إصلاح الخطأ هنا: نمرر الصورة نفسها كحالة تالية لأنها الإشارة الثابتة
+        brain.learn(img_right, action, reward, img_right)
         
         total_reward += reward
         steps += 1
