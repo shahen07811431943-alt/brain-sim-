@@ -12,17 +12,15 @@ print("Starting Sleep & Memory Consolidation Test...")
 brain = Brain(input_dim=5)
 sleep_engine = SleepEngine(brain.memory)
 
-# 1. تعلم المهمة A
+# 1. تعلم المهمة A (نرسل الاسم داخل process)
 task_A = np.array([1.0, 0.0, 0.0, 0.0, 0.0])
 for _ in range(20):
-    brain.process(task_A, reward=1.0)
-    brain.memory.encode_episode(task_A, label="Task_A")
+    brain.process(task_A, reward=1.0, label="Task_A")
 
-# 2. تعلم المهمة B (هنا يحدث تداخل يسبب النسيان الكارثي)
+# 2. تعلم المهمة B
 task_B = np.array([0.0, 1.0, 0.0, 0.0, 0.0])
 for _ in range(20):
-    brain.process(task_B, reward=1.0)
-    brain.memory.encode_episode(task_B, label="Task_B")
+    brain.process(task_B, reward=1.0, label="Task_B")
 
 # 3. اختبار التذكر قبل النوم
 label_before, _ = brain.memory.retrieve_from_cortex(task_A)
