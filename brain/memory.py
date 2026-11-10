@@ -1,30 +1,31 @@
-from collections import deque
 import numpy as np
+from collections import deque
 
 class MemorySystem:
-    """يحاكي الحصين (سريع) والقشرة (بطيئة ومستقرة)."""
-    def __init__(self, hippocampal_capacity=1000):
-        self.hippocampus = deque(maxlen=hippocampal_capacity) # ذاكرة عرضية سريعة
-        self.cortex_patterns = {} # أنماط قشرية مستقرة
+    def __init__(self, hippocampal_capacity=100):
+        # الحصين: ذاكرة مؤقتة سريعة
+        self.hippocampus = deque(maxlen=hippocampal_capacity)
+        # القشرة: ذاكرة طويلة المدى
+        self.cortex = {} 
 
     def encode_episode(self, pattern, label):
-        """الحصين يخزن الخبرة فورًا (تعلم من مثال واحد)."""
+        """الحصين يخزن الخبرة فوراً"""
         self.hippocampus.append((pattern.copy(), label))
 
     def consolidate_to_cortex(self, pattern, label):
-        """القشرة تدمج الأنماط ببطء (أثناء النوم)."""
-        if label not in self.cortex_patterns:
-            self.cortex_patterns[label] = [pattern.copy()]
+        """القشرة تدمج الأنماط ببطء (أثناء النوم)"""
+        if label not in self.cortex:
+            self.cortex[label] = pattern.copy()
         else:
-            # متوسط متحرك يحاكي التثبيت البطيء
-            self.cortex_patterns[label].append(pattern.copy())
-            self.cortex_patterns[label] = [np.mean(self.cortex_patterns[label], axis=0)]
+            # متوسط متحرك بطيء (يمنع النسيان الكارثي)
+            self.cortex[label] = 0.9 * self.cortex[label] + 0.1 * pattern
 
     def retrieve_from_cortex(self, cue):
-        """استرجاع من الذاكرة المستقرة."""
+        """استرجاع من الذاكرة المستقرة (القشرة)"""
         best_label, best_score = None, -1.0
-        for label, patterns in self.cortex_patterns.items():
-            score = np.dot(cue, patterns[0]) / (np.linalg.norm(cue) * np.linalg.norm(patterns[0]) + 1e-8)
+        for label, pattern in self.cortex.items():
+            denom = (np.linalg.norm(cue) * np.linalg.norm(pattern)) or 1.0
+            score = np.dot(cue, pattern) / denom
             if score > best_score:
                 best_label, best_score = label, score
         return best_label, best_score
