@@ -54,19 +54,14 @@ jobs:
       - name: Run Autonomous Professor
         run: python scripts/self_learning_professor.py
 
-      - name: Run Smart Memory (Vector Database)
-        run: python scripts/smart_memory.py
-      
-      # الخطوة الجديدة: المحادثة الطبيعية
-      - name: Run Conversation Brain
+      - name: Run Conversation Brain (Build Knowledge)
         run: python scripts/conversation_brain.py
       
-      # الحفظ التلقائي في المستودع
-      - name: Commit and Push Memory Database
+      - name: Commit and Push Memory
         run: |
           git config --global user.name "Brain-Sim Bot"
           git config --global user.email "bot@brain-sim.com"
-          git add brain_conversation.json conversation_history.json 2>/dev/null || true
-          git commit -m "🧠 Brain had a conversation and updated memory" || echo "No changes to commit"
+          git add brain_conversation.json 2>/dev/null || true
+          git commit -m "🧠 Brain updated its knowledge base" || echo "No changes"
           git pull --rebase origin main
           git push origin main
