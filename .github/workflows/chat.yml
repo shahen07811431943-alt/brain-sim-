@@ -1,0 +1,34 @@
+name: Brain Chat Interface
+
+on:
+  push:
+    paths:
+      - 'question.txt' # يعمل فقط عندما تقوم بتعديل ملف السؤال
+
+permissions:
+  contents: write
+
+jobs:
+  chat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+        
+      - name: Process Question and Generate Answer
+        run: python scripts/chat_interface.py
+        
+      - name: Commit the Answer to the Repository
+        run: |
+          git config --global user.name "Brain-Sim Bot"
+          git config --global user.email "bot@brain-sim.com"
+          git add answer.txt chat_history.md
+          git commit -m "💬 Brain replied to a new question" || echo "No changes"
+          git push origin main
