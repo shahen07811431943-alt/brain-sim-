@@ -49,10 +49,17 @@ jobs:
       - name: Run Global Brain (Read & Answer)
         run: python scripts/global_brain.py
         
-      # الخطوة الجديدة: العالِم الذي يدرس نفسه (تم تصحيح المسافة هنا)
+      # الخطوة السابقة: العالِم الذي يدرس نفسه
       - name: Run Autonomous Professor
         run: python scripts/self_learning_professor.py
 
-      # الخطوة الجديدة: الذاكرة الذكية ودمج المعرفة
+      # الخطوة السابقة: الذاكرة الذكية ودمج المعرفة
       - name: Run Smart Memory
-        run: python scripts/smart_memory.py 
+        run: python scripts/smart_memory.py
+      
+      # الخطوة الجديدة: حفظ ملف قاعدة البيانات كأرشيف لتحميله
+      - name: Upload Brain Memory Database
+        uses: actions/upload-artifact@v4
+        with:
+          name: brain-memory-db
+          path: brain_memory.json
