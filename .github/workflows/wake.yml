@@ -6,9 +6,8 @@ on:
   pull_request:
     branches: [ main ]
   schedule:
-    - cron: '0 0 * * *' # يعمل تلقائياً كل يوم منتصف الليل ليتعلم ويتوسع
+    - cron: '0 0 * * *'
 
-# ضروري جداً للسماح لـ GitHub Actions بالحفظ في المستودع
 permissions:
   contents: write
 
@@ -18,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # ضروري لعملية git pull --rebase
+          fetch-depth: 0
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -49,22 +48,25 @@ jobs:
       - name: Run Integrated Brain
         run: python scripts/train_integrated_brain.py
         
-      - name: Run Global Brain (Read & Answer)
+      - name: Run Global Brain
         run: python scripts/global_brain.py
         
       - name: Run Autonomous Professor
         run: python scripts/self_learning_professor.py
 
-      # الخطوة الجديدة: بناء الذاكرة المتجهة
       - name: Run Smart Memory (Vector Database)
         run: python scripts/smart_memory.py
+      
+      # الخطوة الجديدة: المحادثة الطبيعية
+      - name: Run Conversation Brain
+        run: python scripts/conversation_brain.py
       
       # الحفظ التلقائي في المستودع
       - name: Commit and Push Memory Database
         run: |
           git config --global user.name "Brain-Sim Bot"
           git config --global user.email "bot@brain-sim.com"
-          git add brain_vectors.json
-          git commit -m "🧠 Brain automatically updated its vector memory" || echo "No changes to commit"
+          git add brain_conversation.json conversation_history.json 2>/dev/null || true
+          git commit -m "🧠 Brain had a conversation and updated memory" || echo "No changes to commit"
           git pull --rebase origin main
           git push origin main
