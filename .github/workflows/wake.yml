@@ -5,15 +5,20 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  schedule:
+    - cron: '0 0 * * *' # سيعمل تلقائياً كل يوم منتصف الليل ليتعلم ويتوسع!
+
+# ضروري جداً للسماح لـ GitHub Actions بالحفظ في المستودع
+permissions:
+  contents: write
 
 jobs:
   wake-training:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        task: [ "MNIST-A", "MNIST-B" ]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # ضروري لـ git pull --rebase
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -23,8 +28,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
         
-      - name: Run Wake Training (Task ${{ matrix.task }})
-        run: python scripts/train_wake.py --task ${{ matrix.task }}
+      - name: Run Wake Training
+        run: python scripts/train_wake.py --task MNIST-A
         
       - name: Run Plasticity Tests
         run: pytest tests/test_plasticity.py -v
@@ -41,25 +46,24 @@ jobs:
       - name: Run Multimodal Binding
         run: python scripts/train_multimodal.py
         
-      # الخطوة السابقة: التكامل الشامل
       - name: Run Integrated Brain
         run: python scripts/train_integrated_brain.py
         
-      # الخطوة السابقة: الدماغ العالمي (القراءة من الإنترنت والإجابة)
       - name: Run Global Brain (Read & Answer)
         run: python scripts/global_brain.py
         
-      # الخطوة السابقة: العالِم الذي يدرس نفسه
       - name: Run Autonomous Professor
         run: python scripts/self_learning_professor.py
 
-      # الخطوة السابقة: الذاكرة الذكية ودمج المعرفة
       - name: Run Smart Memory
         run: python scripts/smart_memory.py
       
-      # الخطوة الجديدة: حفظ ملف قاعدة البيانات كأرشيف لتحميله
-      - name: Upload Brain Memory Database
-        uses: actions/upload-artifact@v4
-        with:
-          name: brain-memory-db
-          path: brain_memory.json
+      # الخطوة السحرية: الحفظ التلقائي في المستودع
+      - name: Commit and Push Memory Database
+        run: |
+          git config --global user.name "Brain-Sim Bot"
+          git config --global user.email "bot@brain-sim.com"
+          git add brain_memory.json
+          git commit -m "🧠 Brain automatically updated its memory database" || echo "No changes to commit"
+          git pull --rebase origin main
+          git push origin main
