@@ -52,3 +52,7 @@ jobs:
       # الخطوة الجديدة: العالِم الذي يدرس نفسه (تم تصحيح المسافة هنا)
       - name: Run Autonomous Professor
         run: python scripts/self_learning_professor.py
+
+      # الخطوة الجديدة: الذاكرة الذكية ودمج المعرفة
+      - name: Run Smart Memory
+        run: python scripts/smart_memory.py 
