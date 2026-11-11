@@ -48,3 +48,8 @@ jobs:
       # الخطوة الجديدة: الدماغ العالمي (القراءة من الإنترنت والإجابة)
       - name: Run Global Brain (Read & Answer)
         run: python scripts/global_brain.py
+        
+      # الخطوة الجديدة: العالِم الذي يدرس نفسه
+      - name: Run Autonomous Professor
+       run: python scripts/self_learning_professor.py
+    
