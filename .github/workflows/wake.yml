@@ -41,6 +41,10 @@ jobs:
       - name: Run Multimodal Binding
         run: python scripts/train_multimodal.py
         
-      # الخطوة النهائية: التكامل الشامل
+      # الخطوة السابقة: التكامل الشامل
       - name: Run Integrated Brain
         run: python scripts/train_integrated_brain.py
+        
+      # الخطوة الجديدة: الدماغ العالمي (القراءة من الإنترنت والإجابة)
+      - name: Run Global Brain (Read & Answer)
+        run: python scripts/global_brain.py
