@@ -1,50 +1,57 @@
 import sys
 import os
 import re
-import math
-from collections import defaultdict
 import wikipediaapi
 
 print("🌐 Initializing Global Brain: Fetching live knowledge from Wikipedia...")
 
-# --- 1. محرك الذاكرة والاسترجاع (BM25 Algorithm built from scratch) ---
-class BM25Retriever:
-    def __init__(self, corpus):
-        self.corpus = corpus
-        self.doc_len = [len(doc.split()) for doc in corpus]
-        self.avgdl = sum(self.doc_len) / len(corpus) if corpus else 0
-        self.doc_freqs = []
-        self.idf = {}
-        self.k1 = 1.5
-        self.b = 0.75
-        self._initialize()
+# --- 1. محرك الذاكرة والاسترجاع (محرك بحث ذكي للغة العربية) ---
+# قائمة بأدوات الربط (Stop Words) التي يجب تجاهلها أثناء البحث
+ARABIC_STOP_WORDS = set([
+    "من", "في", "على", "هو", "هي", "ما", "ماذا", "عن", "إلى", "التي", "الذي", "هذا", "هذه", 
+    "أن", "إن", "كان", "كانت", "قد", "لقد", "لا", "لم", "لن", "و", "أو", "ثم", "لكن", "حتى", 
+    "إذا", "كل", "بعض", "غير", "بين", "عند", "لدى", "مع", "دون", "قبل", "بعد", "أمام", "خلف", 
+    "فوق", "تحت", "يقول", "قال", "هل", "كيف", "لماذا", "أين", "متى", "هنا", "هناك", "نحن", "أنت"
+])
 
-    def _initialize(self):
-        df = defaultdict(int)
-        for doc in self.corpus:
-            frequencies = defaultdict(int)
-            for word in doc.lower().split():
-                frequencies[word] += 1
-            self.doc_freqs.append(frequencies)
-            for word in frequencies:
-                df[word] += 1
-        for word, freq in df.items():
-            self.idf[word] = math.log((len(self.corpus) - freq + 0.5) / (freq + 0.5) + 1)
+def tokenize(text):
+    # تنظيف النص من علامات الترقيم
+    text = text.lower()
+    text = re.sub(r'[^\w\s]', ' ', text)
+    words = text.split()
+    # إزالة أدوات الربط (Stop Words)
+    return [w for w in words if w not in ARABIC_STOP_WORDS]
 
-    def search(self, query, top_k=1):
-        scores = []
-        query_words = query.lower().replace("؟", "").replace("ما", "").split()
-        for i, doc in enumerate(self.corpus):
-            score = 0
-            for word in query_words:
-                if word in self.doc_freqs[i]:
-                    freq = self.doc_freqs[i][word]
-                    numerator = freq * (self.k1 + 1)
-                    denominator = freq + self.k1 * (1 - self.b + self.b * (self.doc_len[i] / self.avgdl))
-                    score += self.idf.get(word, 0) * (numerator / denominator)
-            scores.append((score, i))
-        scores.sort(key=lambda x: x[0], reverse=True)
-        return [self.corpus[i] for score, i in scores[:top_k]]
+class SmartRetriever:
+    def __init__(self, corpus_dict):
+        self.corpus_dict = corpus_dict
+
+    def search(self, query):
+        q_words = set(tokenize(query))
+        if not q_words:
+            return None
+            
+        best_topic = None
+        best_score = 0
+        
+        for topic, doc in self.corpus_dict.items():
+            d_words = set(tokenize(doc))
+            
+            # 1. حساب التشابه (تقاطع الكلمات)
+            score = len(q_words.intersection(d_words))
+            
+            # 2. إعطاء أولوية قصوى إذا كان السؤال يحتوي على كلمة من عنوان المقالة
+            topic_words = set(tokenize(topic.replace("_", " ")))
+            title_match = len(q_words.intersection(topic_words))
+            score += title_match * 10  # مكافأة كبيرة للتطابق مع العنوان
+            
+            if score > best_score:
+                best_score = score
+                best_topic = topic
+                
+        if best_score >= 10: # يجب أن يتطابق مع العنوان على الأقل
+            return self.corpus_dict[best_topic]
+        return None
 
 # --- 2. الاتصال بالمصدر (ويكيبيديا) ---
 wiki = wikipediaapi.Wikipedia(
@@ -52,7 +59,6 @@ wiki = wikipediaapi.Wikipedia(
     language='ar'
 )
 
-# مواضيع متنوعة تغطي الدين، الدنيا، العلوم، الطب، والفلك
 topics = [
     "الذكاء_الاصطناعي", 
     "الدماغ_البشري", 
@@ -68,13 +74,12 @@ topics = [
     "الروبوتات"
 ]
 
-corpus = []
+corpus = {}
 for topic in topics:
     page = wiki.page(topic)
     if page.exists():
-        # سحب أول 500 حرف من كل مقال
         text = page.summary[0:500].replace("\n", " ")
-        corpus.append(text)
+        corpus[topic] = text
         print(f"   ✅ Loaded Knowledge: {topic}")
 
 if not corpus:
@@ -82,8 +87,8 @@ if not corpus:
     sys.exit(1)
 
 # --- 3. بناء الذاكرة ---
-print(f"\n🧠 Building Neural Index with {len(corpus)} dense knowledge nodes...")
-retriever = BM25Retriever(corpus)
+print(f"\n🧠 Building Smart Index with {len(corpus)} dense knowledge nodes...")
+retriever = SmartRetriever(corpus)
 
 # --- 4. الحوار (اختبار الأسئلة) ---
 questions = [
@@ -91,21 +96,20 @@ questions = [
     "ماذا يقول القرآن؟",
     "ما هو الدماغ البشري؟",
     "ما هي الفلسفة؟",
-    "ما هو الفضاء؟"
+    "ما هو الفضاء؟",
+    "ما هي الرياضيات؟"
 ]
 
-print("\n🗣️ Starting Brain Dialogue (Pure Knowledge Retrieval):")
+print("\n🗣️ Starting Brain Dialogue (Smart Retrieval):")
 print("=" * 60)
 
 for q in questions:
     print(f"\n👤 Human: {q}")
-    results = retriever.search(q, top_k=1)
-    if results and results[0]:
-        answer = results[0]
-        print(f"🧠 Brain: {answer}")
+    result = retriever.search(q)
+    if result:
+        print(f"🧠 Brain: {result}")
     else:
         print("🧠 Brain: عذراً، هذه المعلومة ليست في ذاكرتي الحالية.")
 
 print("\n" + "=" * 60)
 print("🏆 SUCCESS! The Brain read massive live data and answered queries accurately.")
-print("(Zero external LLMs, Zero hallucinations, 100% Internal Math).")
