@@ -22,13 +22,15 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
         
-      - name: Process Question and Generate Answer
-        run: python scripts/chat_interface.py
+      - name: Process Question (Generative Brain)
+        # هنا نستخدم السكربت التوليدي الجديد
+        run: python scripts/generative_chat.py
         
       - name: Commit the Answer to the Repository
         run: |
           git config --global user.name "Brain-Sim Bot"
           git config --global user.email "bot@brain-sim.com"
           git add answer.txt chat_history.md
-          git commit -m "💬 Brain replied to a new question" || echo "No changes"
+          git commit -m "💬 Generative Brain replied to a new question" || echo "No changes"
+          git pull --rebase origin main
           git push origin main
